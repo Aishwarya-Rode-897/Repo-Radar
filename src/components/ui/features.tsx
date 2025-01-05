@@ -27,7 +27,7 @@ const features = [
 export default function Features() {
   return (
     <section className="py-20 px-4 md:px-6">
-      <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
+      <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-purple-400 via-pink-500 to-pink-400 text-transparent bg-clip-text">Features</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {features.map((feature, index) => (
           <Card key={index}>

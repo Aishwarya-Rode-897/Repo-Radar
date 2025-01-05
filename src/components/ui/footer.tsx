@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="py-6 px-4 md:px-6 border-t">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="mb-4 md:mb-0">
-          <p>&copy; 2023 RepoRadar. All rights reserved.</p>
+          <p>&copy; 2025 RepoRadar. All rights reserved.</p>
         </div>
         <nav className="flex space-x-4">
           <Link href="/about" className="hover:underline">

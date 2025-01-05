@@ -3,6 +3,7 @@ import Hero from '@/components/ui/hero'
 import Features from '@/components/ui/features'
 import Pricing from '@/components/ui/pricing'
 import Footer from '@/components/ui/footer'
+import Demo from '@/components/ui/demo'
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
       <main className="flex-grow">
         <Hero />
         <Features />
+        <Demo />
         <Pricing />
       </main>
       <Footer />

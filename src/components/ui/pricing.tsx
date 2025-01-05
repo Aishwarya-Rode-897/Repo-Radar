@@ -27,7 +27,7 @@ const plans = [
 export default function Pricing() {
   return (
     <section className="py-20 px-4 md:px-6">
-      <h2 className="text-3xl font-bold text-center mb-12">Pricing</h2>
+      <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-purple-400 via-pink-500 to-pink-400 text-transparent bg-clip-text">Pricing</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {plans.map((plan, index) => (
           <Card key={index} className={index === 1 ? 'border-primary' : ''}>
