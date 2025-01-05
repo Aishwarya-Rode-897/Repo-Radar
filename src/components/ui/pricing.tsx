@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 
 const plans = [
   {
@@ -31,8 +32,17 @@ export default function Pricing() {
         {plans.map((plan, index) => (
           <Card key={index} className={index === 1 ? 'border-primary' : ''}>
             <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
+                </div>
+                {index > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    Coming Soon
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold mb-4">{plan.price}</p>
@@ -56,9 +66,15 @@ export default function Pricing() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button asChild className="w-full">
-                <Link href={`/signup?plan=${plan.name.toLowerCase()}`}>Choose Plan</Link>
-              </Button>
+              {index === 0 ? (
+                <Button asChild className="w-full">
+                  <Link href={`/signup?plan=${plan.name.toLowerCase()}`}>Choose Plan</Link>
+                </Button>
+              ) : (
+                <Button className="w-full" disabled>
+                  Coming Soon
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
