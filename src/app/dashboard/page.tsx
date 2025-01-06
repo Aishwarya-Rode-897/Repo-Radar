@@ -7,6 +7,7 @@ import { Copy, Key, Pencil, Plus, RefreshCw, Trash2, Menu, Home, FileText, Users
 import Link from "next/link";
 import { ApiKeyDB, createApiKey, deleteApiKey, getApiKeys, regenerateApiKey, updateApiKeyName, updateApiKeyStatus } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Logo } from "@/components/ui/logo";
 
 interface ApiKey extends Omit<ApiKeyDB, 'created_at'> {
   createdAt: string;
@@ -193,14 +194,20 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div className={`fixed top-0 left-0 h-full bg-[#1f2123] transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'} z-20`}>
         <div className="p-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-full flex items-center justify-center mb-6 text-gray-400 hover:text-white"
-          >
-            <Menu className="w-6 h-6" />
-          </Button>
+          <div className="flex items-center justify-end mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="text-gray-400 hover:text-white"
+            >
+              <Menu className="w-6 h-6" />
+            </Button>
+          </div>
+
+          <div className="mb-6 flex items-center justify-center">
+            <Logo showText={isSidebarOpen} />
+          </div>
           
           <nav className="space-y-2">
             <Link href="/">
