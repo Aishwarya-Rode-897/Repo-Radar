@@ -16,7 +16,7 @@ export default function Header() {
               <Button variant="ghost">Dashboard</Button>
             </Link>
             <Button className="bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 text-white">
-              Get Started
+              Sign In
             </Button>
           </div>
         </div>
