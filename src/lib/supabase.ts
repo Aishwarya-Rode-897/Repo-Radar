@@ -107,4 +107,27 @@ export async function deleteApiKey(id: string, userId: string) {
 
   if (error) throw error;
   return true;
+}
+
+export async function validateApiKey(key: string) {
+  try {
+    const { data, error } = await supabase
+      .from('api_keys')
+      .select('*')
+      .eq('key', key)
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {  // No rows returned error
+        return false;
+      }
+      throw error;  // For other types of errors
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error validating API key:', error);
+    throw error;  // Re-throw the error to be handled by the caller
+  }
 } 
