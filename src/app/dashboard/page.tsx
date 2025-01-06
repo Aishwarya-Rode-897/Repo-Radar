@@ -2,30 +2,24 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Key, Pencil, Plus, RefreshCw, Trash2, Menu, Home, FileText, Users, Settings, LogOut, Bell, ChevronDown, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { ApiKeyDB, createApiKey, deleteApiKey, getApiKeys, regenerateApiKey, updateApiKeyName, updateApiKeyStatus } from "@/lib/supabase";
+import { toast } from "sonner";
 
-interface ApiKey {
-  id: string;
-  name: string;
-  key: string;
+interface ApiKey extends Omit<ApiKeyDB, 'created_at'> {
   createdAt: string;
   isVisible?: boolean;
   isActive: boolean;
 }
 
+// Mock user ID until auth is implemented
+const MOCK_USER_ID = "123";
+
 export default function Dashboard() {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: "1",
-      name: "Production API Key",
-      key: "rr_prod_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-      createdAt: "2024-01-20",
-      isVisible: false,
-      isActive: true,
-    },
-  ]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
@@ -33,21 +27,57 @@ export default function Dashboard() {
   const [editKeyName, setEditKeyName] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleCreateKey = () => {
-    if (!newKeyName.trim()) return;
-    
-    const newKey: ApiKey = {
-      id: Math.random().toString(),
-      name: newKeyName,
-      key: `rr_${Math.random().toString(36).substring(2, 15)}`,
-      createdAt: new Date().toISOString().split("T")[0],
-      isActive: true,
-      isVisible: false,
-    };
+  useEffect(() => {
+    loadApiKeys();
+  }, []);
 
-    setApiKeys([...apiKeys, newKey]);
-    setNewKeyName("");
-    setShowCreateModal(false);
+  const loadApiKeys = async () => {
+    try {
+      const keys = await getApiKeys(MOCK_USER_ID);
+      setApiKeys(
+        keys.map((key) => ({
+          ...key,
+          createdAt: new Date(key.created_at).toISOString().split('T')[0],
+          isVisible: false,
+          isActive: key.is_active,
+        }))
+      );
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+      toast.error('Failed to load API keys');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateKey = async () => {
+    if (!newKeyName.trim()) {
+      toast.error('Key name is required');
+      return;
+    }
+    
+    try {
+      const newKey = await createApiKey(newKeyName, MOCK_USER_ID);
+      if (!newKey) {
+        throw new Error('Failed to create API key');
+      }
+      
+      setApiKeys([
+        {
+          ...newKey,
+          createdAt: new Date(newKey.created_at).toISOString().split('T')[0],
+          isVisible: false,
+          isActive: newKey.is_active,
+        },
+        ...apiKeys,
+      ]);
+      setNewKeyName("");
+      setShowCreateModal(false);
+      toast.success('API key created successfully');
+    } catch (error: any) {
+      console.error('Error creating API key:', error);
+      toast.error(error.message || 'Failed to create API key');
+    }
   };
 
   const handleEditClick = (key: ApiKey) => {
@@ -56,44 +86,70 @@ export default function Dashboard() {
     setShowEditModal(true);
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (!editingKey || !editKeyName.trim()) return;
 
-    setApiKeys(
-      apiKeys.map((key) =>
-        key.id === editingKey.id
-          ? {
-              ...key,
-              name: editKeyName,
-            }
-          : key
-      )
-    );
-    setShowEditModal(false);
-    setEditingKey(null);
-    setEditKeyName("");
+    try {
+      const updatedKey = await updateApiKeyName(editingKey.id, editKeyName, MOCK_USER_ID);
+      setApiKeys(
+        apiKeys.map((key) =>
+          key.id === editingKey.id
+            ? {
+                ...key,
+                name: editKeyName,
+              }
+            : key
+        )
+      );
+      setShowEditModal(false);
+      setEditingKey(null);
+      setEditKeyName("");
+      toast.success('API key name updated successfully');
+    } catch (error) {
+      console.error('Error updating API key name:', error);
+      toast.error('Failed to update API key name');
+    }
   };
 
-  const handleDeleteKey = (id: string) => {
-    setApiKeys(apiKeys.filter((key) => key.id !== id));
+  const handleDeleteKey = async (id: string) => {
+    try {
+      await deleteApiKey(id, MOCK_USER_ID);
+      setApiKeys(apiKeys.filter((key) => key.id !== id));
+      toast.success('API key deleted successfully');
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      toast.error('Failed to delete API key');
+    }
   };
 
   const handleCopyKey = async (key: string) => {
-    await navigator.clipboard.writeText(key);
-    // You can add a toast notification here
+    try {
+      await navigator.clipboard.writeText(key);
+      toast.success('API key copied to clipboard');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast.error('Failed to copy API key');
+    }
   };
 
-  const handleRegenerateKey = (id: string) => {
-    setApiKeys(
-      apiKeys.map((key) =>
-        key.id === id
-          ? {
-              ...key,
-              key: `rr_${Math.random().toString(36).substring(2, 15)}`,
-            }
-          : key
-      )
-    );
+  const handleRegenerateKey = async (id: string) => {
+    try {
+      const updatedKey = await regenerateApiKey(id, MOCK_USER_ID);
+      setApiKeys(
+        apiKeys.map((key) =>
+          key.id === id
+            ? {
+                ...key,
+                key: updatedKey.key,
+              }
+            : key
+        )
+      );
+      toast.success('API key regenerated successfully');
+    } catch (error) {
+      console.error('Error regenerating API key:', error);
+      toast.error('Failed to regenerate API key');
+    }
   };
 
   const handleToggleVisibility = (id: string) => {
@@ -109,17 +165,27 @@ export default function Dashboard() {
     );
   };
 
-  const handleToggleStatus = (id: string) => {
-    setApiKeys(
-      apiKeys.map((key) =>
-        key.id === id
-          ? {
-              ...key,
-              isActive: !key.isActive,
-            }
-          : key
-      )
-    );
+  const handleToggleStatus = async (id: string) => {
+    const key = apiKeys.find((k) => k.id === id);
+    if (!key) return;
+
+    try {
+      await updateApiKeyStatus(id, !key.isActive, MOCK_USER_ID);
+      setApiKeys(
+        apiKeys.map((k) =>
+          k.id === id
+            ? {
+                ...k,
+                isActive: !k.isActive,
+              }
+            : k
+        )
+      );
+      toast.success(`API key ${key.isActive ? 'deactivated' : 'activated'} successfully`);
+    } catch (error) {
+      console.error('Error updating API key status:', error);
+      toast.error('Failed to update API key status');
+    }
   };
 
   return (
