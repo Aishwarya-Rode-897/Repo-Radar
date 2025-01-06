@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Copy, Key, Pencil, Plus, RefreshCw, Trash2, Menu, Home, FileText, Users, Settings, LogOut, Bell, ChevronDown, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +26,8 @@ export default function Dashboard() {
   const [newKeyName, setNewKeyName] = useState("");
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [editKeyName, setEditKeyName] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     loadApiKeys();
@@ -191,8 +192,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#1a1c1e] text-white">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-10 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full bg-[#1f2123] transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'} z-20`}>
+      <div className={`fixed top-0 left-0 h-full bg-[#1f2123] transition-all duration-300 ${
+        isSidebarOpen ? 'w-64 translate-x-0' : 'w-20 -translate-x-full lg:translate-x-0'
+      } z-20`}>
         <div className="p-4">
           <div className="flex items-center justify-end mb-6">
             <Button
@@ -255,11 +266,23 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1c1e] border-b border-gray-800 z-10">
-          <div className="flex justify-end items-center h-16 px-8">
-            <div className="flex items-center gap-4">
+          <div className="flex justify-between items-center h-16 px-4 lg:px-8">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="text-gray-400 hover:text-white lg:hidden"
+              >
+                <Menu className="w-6 h-6" />
+              </Button>
+              <h1 className="text-xl font-semibold hidden sm:block">Dashboard</h1>
+            </div>
+
+            <div className="flex items-center gap-4 ml-auto">
               <Button
                 variant="ghost"
                 size="sm"
@@ -287,43 +310,48 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Page Content */}
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">API Keys</h1>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white"
-            >
-              <Plus className="w-4 h-4" />
-              Create New Key
-            </Button>
-          </div>
-
-          <Card className="p-6 bg-[#1f2123] border-0">
+        {/* Content */}
+        <div className="p-4 lg:p-8">
+          <Card className="bg-[#1f2123] border-gray-800">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle>API Keys</CardTitle>
+                  <CardDescription>Manage your API keys</CardDescription>
+                </div>
+                <div className="w-full sm:w-auto">
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white"
+                  >
+                    Create New Key
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left pb-4 text-gray-400">Name</th>
-                    <th className="text-left pb-4 text-gray-400">API Key</th>
-                    <th className="text-left pb-4 text-gray-400">Status</th>
-                    <th className="text-left pb-4 text-gray-400">Created</th>
-                    <th className="text-left pb-4 text-gray-400">Actions</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Name</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">API Key</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium hidden sm:table-cell">Created</th>
+                    <th className="text-right py-3 px-4 text-gray-400 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {apiKeys.map((key) => (
                     <tr key={key.id} className="border-b border-gray-700 last:border-0">
-                      <td className="py-4">
+                      <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <Key className="w-4 h-4 text-gray-400" />
                           {key.name}
                         </div>
                       </td>
-                      <td className="py-4 font-mono text-gray-300">
+                      <td className="py-4 px-4 font-mono text-gray-300">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1">
+                          <div className="flex-1 truncate max-w-[200px] sm:max-w-none">
                             {key.isVisible ? (
                               key.key
                             ) : (
@@ -345,23 +373,23 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </td>
-                      <td className="py-4">
+                      <td className="py-4 px-4">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleStatus(key.id)}
                           className={`rounded-full px-3 ${
                             key.isActive
-                              ? 'bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600'
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
                               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                           }`}
                         >
                           {key.isActive ? 'Active' : 'Inactive'}
                         </Button>
                       </td>
-                      <td className="py-4 text-gray-300">{key.createdAt}</td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-2">
+                      <td className="py-4 px-4 text-gray-300 hidden sm:table-cell">{key.createdAt}</td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -374,7 +402,7 @@ export default function Dashboard() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditClick(key)}
-                            className="hover:bg-[#2a2d30]"
+                            className="hover:bg-[#2a2d30] hidden sm:inline-flex"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
