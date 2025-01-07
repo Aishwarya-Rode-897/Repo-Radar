@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, ChevronDown, FileText, Home, Key, LogOut, Menu, Settings, Code2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -12,11 +12,13 @@ import { CreateKeyModal } from "@/components/api-keys/CreateKeyModal";
 import { EditKeyModal } from "@/components/api-keys/EditKeyModal";
 import { ApiKeyTable } from "@/components/api-keys/ApiKeyTable";
 import { ApiKey } from "@/lib/api/apiKeys";
-
-// Mock user ID until auth is implemented
-const MOCK_USER_ID = "123";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const {
     apiKeys,
     isLoading,
@@ -26,12 +28,30 @@ export default function Dashboard() {
     regenerateKey,
     toggleKeyStatus,
     toggleKeyVisibility,
-  } = useApiKeys(MOCK_USER_ID);
+  } = useApiKeys(session?.user?.email || "");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push('/');
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session?.user) {
+    return null;
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
 
   const handleCreateKey = async (name: string) => {
     await createKey(name);
@@ -58,6 +78,10 @@ export default function Dashboard() {
       toast.error('Failed to copy API key');
     }
   };
+
+  const userImage = session.user.image;
+  const userName = session.user.name || 'User';
+  const userInitial = userName.charAt(0);
 
   return (
     <div className="min-h-screen bg-[#1a1c1e] text-white">
@@ -135,6 +159,7 @@ export default function Dashboard() {
         <div className="absolute bottom-4 w-full px-4">
           <Button
             variant="ghost"
+            onClick={handleSignOut}
             className={`w-full flex items-center gap-3 justify-${isSidebarOpen ? 'start' : 'center'} text-white bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600`}
           >
             <LogOut className="w-5 h-5" />
@@ -169,12 +194,24 @@ export default function Dashboard() {
                 <Bell className="w-5 h-5" />
               </Button>
               <div className="flex items-center gap-3 pl-4 border-l border-gray-800">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 flex items-center justify-center">
-                  <span className="text-sm font-medium">A</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden">
+                  {userImage ? (
+                    <Image
+                      src={userImage}
+                      alt={userName}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 flex items-center justify-center">
+                      <span className="text-sm font-medium">{userInitial}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-sm font-medium">Aishwarya</div>
-                  <div className="text-xs text-gray-400">Admin</div>
+                  <div className="text-sm font-medium">{userName}</div>
+                  <div className="text-xs text-gray-400">{session.user?.email}</div>
                 </div>
                 <Button
                   variant="ghost"

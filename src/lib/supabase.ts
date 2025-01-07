@@ -14,6 +14,15 @@ export interface ApiKeyDB {
   user_id: string;
 }
 
+export interface UserDB {
+  id: string;
+  email: string;
+  name: string;
+  image: string;
+  created_at: string;
+  last_login: string;
+}
+
 export async function createApiKey(name: string, userId: string) {
   if (!name || !userId) {
     throw new Error('Name and user ID are required');
@@ -130,4 +139,79 @@ export async function validateApiKey(key: string) {
     console.error('Error validating API key:', error);
     throw error;  // Re-throw the error to be handled by the caller
   }
+}
+
+export async function upsertUser(user: {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+}) {
+  const { email, name, image } = user;
+  
+  console.log('Starting upsertUser with data:', { email, name, image });
+
+  try {
+    // First, check if user exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    console.log('Existing user check:', { existingUser, fetchError });
+
+    const userData = {
+      email,
+      name: name || '',
+      image: image || '',
+      last_login: new Date().toISOString(),
+    };
+
+    let result;
+    if (!existingUser) {
+      // Insert new user
+      console.log('Inserting new user');
+      result = await supabase
+        .from('users')
+        .insert([userData])
+        .select()
+        .single();
+    } else {
+      // Update existing user
+      console.log('Updating existing user');
+      result = await supabase
+        .from('users')
+        .update(userData)
+        .eq('email', email)
+        .select()
+        .single();
+    }
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error('Supabase operation error:', error);
+      throw error;
+    }
+
+    console.log('Upsert operation successful:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in upsertUser:', error);
+    throw error;
+  }
+}
+
+export async function getUser(email: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows returned
+    throw error;
+  }
+
+  return data;
 } 

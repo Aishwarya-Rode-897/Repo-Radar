@@ -7,8 +7,10 @@ export const useApiKeys = (userId: string) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadApiKeys();
-  }, []);
+    if (userId) {
+      loadApiKeys();
+    }
+  }, [userId]);
 
   const loadApiKeys = async () => {
     try {

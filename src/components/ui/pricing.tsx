@@ -1,7 +1,10 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 const plans = [
   {
@@ -25,6 +28,17 @@ const plans = [
 ]
 
 export default function Pricing() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleGetStarted = async () => {
+    if (session) {
+      router.push('/dashboard');
+    } else {
+      await signIn('google', { callbackUrl: '/dashboard' });
+    }
+  };
+
   return (
     <section className="py-20 px-4 md:px-6">
       <h2 className="text-3xl font-bold text-center mb-8 md:mb-12 bg-gradient-to-r from-purple-400 via-pink-500 to-pink-400 text-transparent bg-clip-text">Pricing</h2>
@@ -72,6 +86,7 @@ export default function Pricing() {
               <Button 
                 className="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white opacity-100 disabled:opacity-75"
                 disabled={index > 0}
+                onClick={index === 0 ? handleGetStarted : undefined}
               >
                 {index === 0 ? 'Get Started' : 'Coming Soon'}
               </Button>
