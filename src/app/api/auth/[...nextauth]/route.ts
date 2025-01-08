@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { upsertUser } from "@/lib/supabase";
+import { upsertUser, getUser } from "@/lib/supabase";
 
 const handler = NextAuth({
   providers: [
@@ -31,11 +31,29 @@ const handler = NextAuth({
       return true;
     },
     async session({ session, token }) {
-      console.log('Session callback', { session, token });
+      if (session?.user?.email) {
+        try {
+          const dbUser = await getUser(session.user.email);
+          if (dbUser) {
+            session.user.id = dbUser.id;
+          }
+        } catch (error) {
+          console.error('Error fetching user data for session:', error);
+        }
+      }
       return session;
     },
     async jwt({ token, user, account }) {
-      console.log('JWT callback', { token, user, account });
+      if (user?.email) {
+        try {
+          const dbUser = await getUser(user.email);
+          if (dbUser) {
+            token.userId = dbUser.id;
+          }
+        } catch (error) {
+          console.error('Error fetching user data for JWT:', error);
+        }
+      }
       return token;
     },
   },

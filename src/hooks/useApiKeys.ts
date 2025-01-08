@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { ApiKey, apiKeyService } from '@/lib/api/apiKeys';
+import { ApiKeyDB } from '@/lib/supabase';
+import { ApiKey } from '@/lib/api/apiKeys';
+
+// Transform function to convert from DB format to component format
+function transformApiKey(dbKey: ApiKeyDB): ApiKey {
+  return {
+    ...dbKey,
+    createdAt: new Date(dbKey.created_at).toISOString().split('T')[0],
+    isActive: dbKey.is_active,
+    isVisible: false,
+  };
+}
 
 export const useApiKeys = (userId: string) => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -14,8 +25,12 @@ export const useApiKeys = (userId: string) => {
 
   const loadApiKeys = async () => {
     try {
-      const keys = await apiKeyService.getApiKeys(userId);
-      setApiKeys(keys);
+      const response = await fetch('/api/api-keys');
+      if (!response.ok) {
+        throw new Error('Failed to load API keys');
+      }
+      const keys: ApiKeyDB[] = await response.json();
+      setApiKeys(keys.map(transformApiKey));
     } catch (error) {
       console.error('Error loading API keys:', error);
       toast.error('Failed to load API keys');
@@ -31,14 +46,21 @@ export const useApiKeys = (userId: string) => {
     }
     
     try {
-      const newKey = await apiKeyService.createApiKey(name, userId);
-      if (!newKey) {
+      const response = await fetch('/api/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) {
         throw new Error('Failed to create API key');
       }
-      
-      setApiKeys([newKey, ...apiKeys]);
+
+      const newKey: ApiKeyDB = await response.json();
+      const transformedKey = transformApiKey(newKey);
+      setApiKeys([transformedKey, ...apiKeys]);
       toast.success('API key created successfully');
-      return newKey;
+      return transformedKey;
     } catch (error: any) {
       console.error('Error creating API key:', error);
       toast.error(error.message || 'Failed to create API key');
@@ -48,15 +70,21 @@ export const useApiKeys = (userId: string) => {
 
   const updateKeyName = async (id: string, name: string) => {
     try {
-      await apiKeyService.updateKeyName(id, name, userId);
+      const response = await fetch(`/api/api-keys/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update API key name');
+      }
+
+      const updatedKey: ApiKeyDB = await response.json();
+      const transformedKey = transformApiKey(updatedKey);
       setApiKeys(
         apiKeys.map((key) =>
-          key.id === id
-            ? {
-                ...key,
-                name,
-              }
-            : key
+          key.id === id ? { ...transformedKey, isVisible: key.isVisible } : key
         )
       );
       toast.success('API key name updated successfully');
@@ -70,7 +98,14 @@ export const useApiKeys = (userId: string) => {
 
   const deleteKey = async (id: string) => {
     try {
-      await apiKeyService.deleteApiKey(id, userId);
+      const response = await fetch(`/api/api-keys/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete API key');
+      }
+
       setApiKeys(apiKeys.filter((key) => key.id !== id));
       toast.success('API key deleted successfully');
       return true;
@@ -83,15 +118,21 @@ export const useApiKeys = (userId: string) => {
 
   const regenerateKey = async (id: string) => {
     try {
-      const updatedKey = await apiKeyService.regenerateApiKey(id, userId);
+      const response = await fetch(`/api/api-keys/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'regenerate' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate API key');
+      }
+
+      const updatedKey: ApiKeyDB = await response.json();
+      const transformedKey = transformApiKey(updatedKey);
       setApiKeys(
         apiKeys.map((key) =>
-          key.id === id
-            ? {
-                ...key,
-                key: updatedKey.key,
-              }
-            : key
+          key.id === id ? { ...transformedKey, isVisible: key.isVisible } : key
         )
       );
       toast.success('API key regenerated successfully');
@@ -108,15 +149,24 @@ export const useApiKeys = (userId: string) => {
     if (!key) return false;
 
     try {
-      await apiKeyService.updateKeyStatus(id, !key.isActive, userId);
+      const response = await fetch(`/api/api-keys/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggle-status',
+          isActive: !key.isActive,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update API key status');
+      }
+
+      const updatedKey: ApiKeyDB = await response.json();
+      const transformedKey = transformApiKey(updatedKey);
       setApiKeys(
         apiKeys.map((k) =>
-          k.id === id
-            ? {
-                ...k,
-                isActive: !k.isActive,
-              }
-            : k
+          k.id === id ? { ...transformedKey, isVisible: k.isVisible } : k
         )
       );
       toast.success(`API key ${key.isActive ? 'deactivated' : 'activated'} successfully`);
