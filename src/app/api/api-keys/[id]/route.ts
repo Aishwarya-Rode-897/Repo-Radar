@@ -23,16 +23,10 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 // PUT /api/api-keys/[id] - Update API key name
 export async function PUT(
   req: Request,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const userId = await getUserIdFromSession();
@@ -59,7 +53,7 @@ export async function PUT(
 // PATCH /api/api-keys/[id] - Update API key status or regenerate key
 export async function PATCH(
   req: Request,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const userId = await getUserIdFromSession();
@@ -89,7 +83,7 @@ export async function PATCH(
 // DELETE /api/api-keys/[id] - Delete an API key
 export async function DELETE(
   req: Request,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const userId = await getUserIdFromSession();
