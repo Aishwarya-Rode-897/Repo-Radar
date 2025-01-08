@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { 
   getUser,
@@ -7,6 +8,9 @@ import {
   regenerateApiKey,
   deleteApiKey
 } from '@/lib/supabase';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Helper function to get user ID from session
 async function getUserIdFromSession() {
@@ -24,12 +28,12 @@ async function getUserIdFromSession() {
 }
 
 export async function PUT(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await req.json();
+    const { name } = await request.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -50,12 +54,12 @@ export async function PUT(
 }
 
 export async function PATCH(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const userId = await getUserIdFromSession();
-    const { action, isActive } = await req.json();
+    const { action, isActive } = await request.json();
 
     if (action === 'regenerate') {
       const updatedKey = await regenerateApiKey(params.id, userId);
@@ -79,7 +83,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

@@ -1,6 +1,10 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { createApiKey, getApiKeys, getUser } from '@/lib/supabase';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Helper function to get user ID from session
 async function getUserIdFromSession() {
@@ -18,8 +22,8 @@ async function getUserIdFromSession() {
 }
 
 export async function GET(
-  request: Request
-): Promise<Response> {
+  request: NextRequest
+) {
   try {
     const userId = await getUserIdFromSession();
     const apiKeys = await getApiKeys(userId);
@@ -35,8 +39,8 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request
-): Promise<Response> {
+  request: NextRequest
+) {
   try {
     const userId = await getUserIdFromSession();
     const { name } = await request.json();
