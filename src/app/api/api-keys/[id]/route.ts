@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { NextRequest } from 'next/server';
-import type { Route } from 'next';
 import { 
   getUser, 
   updateApiKeyName, 
@@ -11,6 +10,7 @@ import {
 } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Helper function to get user ID from session
 async function getUserIdFromSession() {
@@ -27,13 +27,16 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type RouteParams = {
+  params: {
+    id: string;
+  };
+};
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await req.json();
+    const { name } = await request.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -53,13 +56,10 @@ export async function PUT(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getUserIdFromSession();
-    const { action, isActive } = await req.json();
+    const { action, isActive } = await request.json();
 
     if (action === 'regenerate') {
       const updatedKey = await regenerateApiKey(params.id, userId);
@@ -82,10 +82,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const userId = await getUserIdFromSession();
     await deleteApiKey(params.id, userId);
