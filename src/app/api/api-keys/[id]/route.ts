@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { 
   getUser,
@@ -24,12 +24,12 @@ async function getUserIdFromSession() {
 }
 
 export async function PUT(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
-): Promise<Response> {
+) {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await request.json();
+    const { name } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -50,12 +50,12 @@ export async function PUT(
 }
 
 export async function PATCH(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
-): Promise<Response> {
+) {
   try {
     const userId = await getUserIdFromSession();
-    const { action, isActive } = await request.json();
+    const { action, isActive } = await req.json();
 
     if (action === 'regenerate') {
       const updatedKey = await regenerateApiKey(params.id, userId);
@@ -79,9 +79,9 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
-): Promise<Response> {
+) {
   try {
     const userId = await getUserIdFromSession();
     await deleteApiKey(params.id, userId);
