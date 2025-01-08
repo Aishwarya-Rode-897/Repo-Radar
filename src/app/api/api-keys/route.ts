@@ -17,7 +17,9 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-export async function GET(req: Request) {
+export async function GET(
+  request: Request
+): Promise<Response> {
   try {
     const userId = await getUserIdFromSession();
     const apiKeys = await getApiKeys(userId);
@@ -32,10 +34,12 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  request: Request
+): Promise<Response> {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await req.json();
+    const { name } = await request.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
