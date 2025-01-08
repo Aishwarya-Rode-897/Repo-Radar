@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { 
   getUser, 
@@ -23,16 +23,13 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-interface Context {
-  params: {
-    id: string;
-  };
-}
-
-export async function PUT(request: Request, context: Context) {
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await request.json();
+    const { name } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -41,7 +38,7 @@ export async function PUT(request: Request, context: Context) {
       );
     }
 
-    const updatedKey = await updateApiKeyName(context.params.id, name, userId);
+    const updatedKey = await updateApiKeyName(params.id, name, userId);
     return NextResponse.json(updatedKey);
   } catch (error: any) {
     console.error('Error updating API key name:', error);
@@ -52,16 +49,19 @@ export async function PUT(request: Request, context: Context) {
   }
 }
 
-export async function PATCH(request: Request, context: Context) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const userId = await getUserIdFromSession();
-    const { action, isActive } = await request.json();
+    const { action, isActive } = await req.json();
 
     if (action === 'regenerate') {
-      const updatedKey = await regenerateApiKey(context.params.id, userId);
+      const updatedKey = await regenerateApiKey(params.id, userId);
       return NextResponse.json(updatedKey);
     } else if (action === 'toggle-status' && typeof isActive === 'boolean') {
-      const updatedKey = await updateApiKeyStatus(context.params.id, isActive, userId);
+      const updatedKey = await updateApiKeyStatus(params.id, isActive, userId);
       return NextResponse.json(updatedKey);
     } else {
       return NextResponse.json(
@@ -78,10 +78,13 @@ export async function PATCH(request: Request, context: Context) {
   }
 }
 
-export async function DELETE(request: Request, context: Context) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const userId = await getUserIdFromSession();
-    await deleteApiKey(context.params.id, userId);
+    await deleteApiKey(params.id, userId);
     
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {

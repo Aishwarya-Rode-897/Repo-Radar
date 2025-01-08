@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { createApiKey, getApiKeys, getUser } from '@/lib/supabase';
 
@@ -17,7 +17,7 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-export async function GET(request: Request) {
+export async function GET(req: Request) {
   try {
     const userId = await getUserIdFromSession();
     const apiKeys = await getApiKeys(userId);
@@ -32,10 +32,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
     const userId = await getUserIdFromSession();
-    const { name } = await request.json();
+    const { name } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
