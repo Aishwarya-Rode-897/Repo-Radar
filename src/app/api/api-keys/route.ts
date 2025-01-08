@@ -17,10 +17,7 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-// GET /api/api-keys - Get all API keys for the authenticated user
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse> {
+export async function GET(request: Request) {
   try {
     const userId = await getUserIdFromSession();
     const apiKeys = await getApiKeys(userId);
@@ -35,10 +32,7 @@ export async function GET(
   }
 }
 
-// POST /api/api-keys - Create a new API key
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse> {
+export async function POST(request: Request) {
   try {
     const userId = await getUserIdFromSession();
     const { name } = await request.json();

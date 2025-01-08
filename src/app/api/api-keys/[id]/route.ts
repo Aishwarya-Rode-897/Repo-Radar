@@ -23,11 +23,13 @@ async function getUserIdFromSession() {
   return user.id;
 }
 
-// PUT /api/api-keys/[id] - Update API key name
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
+interface Context {
+  params: {
+    id: string;
+  };
+}
+
+export async function PUT(request: Request, context: Context) {
   try {
     const userId = await getUserIdFromSession();
     const { name } = await request.json();
@@ -39,7 +41,7 @@ export async function PUT(
       );
     }
 
-    const updatedKey = await updateApiKeyName(params.id, name, userId);
+    const updatedKey = await updateApiKeyName(context.params.id, name, userId);
     return NextResponse.json(updatedKey);
   } catch (error: any) {
     console.error('Error updating API key name:', error);
@@ -50,20 +52,16 @@ export async function PUT(
   }
 }
 
-// PATCH /api/api-keys/[id] - Update API key status or regenerate key
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
+export async function PATCH(request: Request, context: Context) {
   try {
     const userId = await getUserIdFromSession();
     const { action, isActive } = await request.json();
 
     if (action === 'regenerate') {
-      const updatedKey = await regenerateApiKey(params.id, userId);
+      const updatedKey = await regenerateApiKey(context.params.id, userId);
       return NextResponse.json(updatedKey);
     } else if (action === 'toggle-status' && typeof isActive === 'boolean') {
-      const updatedKey = await updateApiKeyStatus(params.id, isActive, userId);
+      const updatedKey = await updateApiKeyStatus(context.params.id, isActive, userId);
       return NextResponse.json(updatedKey);
     } else {
       return NextResponse.json(
@@ -80,14 +78,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/api-keys/[id] - Delete an API key
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
+export async function DELETE(request: Request, context: Context) {
   try {
     const userId = await getUserIdFromSession();
-    await deleteApiKey(params.id, userId);
+    await deleteApiKey(context.params.id, userId);
     
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
