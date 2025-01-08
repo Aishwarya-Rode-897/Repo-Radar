@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { createApiKey, getApiKeys, getUser } from '@/lib/supabase';
 
@@ -18,7 +18,9 @@ async function getUserIdFromSession() {
 }
 
 // GET /api/api-keys - Get all API keys for the authenticated user
-export async function GET() {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse> {
   try {
     const userId = await getUserIdFromSession();
     const apiKeys = await getApiKeys(userId);
@@ -34,7 +36,9 @@ export async function GET() {
 }
 
 // POST /api/api-keys - Create a new API key
-export async function POST(request: Request) {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse> {
   try {
     const userId = await getUserIdFromSession();
     const { name } = await request.json();
